@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TapGo - طلبات الطاولات الذكية</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+    
+    <script src="html5-qrcode.min.js"></script> 
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <img src="TapGoLogo.png" alt="TapGo Logo" class="logo">
+            <h1>TapGo - طلبات الطاولات الذكية</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="table-number-section" class="card">
+            <h2>أهلاً بك في TapGo!</h2>
+            <p>يرجى مسح **رمز QR** الموجود على الطاولة لبدء طلبك.</p>
+            
+            <button id="start-scan-btn" class="btn btn-primary" onclick="startQrScanner()">
+                بدء مسح رمز الطاولة
+            </button>
+
+            <div id="qr-reader" style="width: 100%; display: none;"></div>
+
+            <p id="table-display" class="table-info" style="display: none;"></p>
+        </div>
+
+        <div id="menu-section" style="display:none;">
+            <h2>قائمة الطعام والشراب</h2>
+            
+            <div class="menu-categories">
+                <button class="btn btn-secondary active" onclick="filterMenu('all')">الكل</button>
+                <button class="btn btn-secondary" onclick="filterMenu('drinks')">مشروبات</button>
+                <button class="btn btn-secondary" onclick="filterMenu('food')">مأكولات</button>
+                <button class="btn btn-secondary" onclick="filterMenu('desserts')">حلويات</button>
+            </div>
+
+            <div id="menu-items" class="menu-grid">
+                </div>
+        </div>
+
+        <div id="cart-section" style="display:none;" class="card">
+            <h2>سلة الطلبات <span id="cart-count">(0)</span></h2>
+            <ul id="cart-list">
+                <li style="text-align: center; color: #6c757d;">السلة فارغة</li>
+            </ul>
+            
+            <p class="total-price">المجموع الكلي: <span id="cart-total">0.00</span> جنيه</p>
+            
+            <button id="checkout-btn" class="btn btn-success" style="display:none;" onclick="goToCheckout()">أكمل طلبك</button>
+        </div>
+
+        <div id="checkout-page" style="display:none;" class="card">
+            <h2>عملية الدفع</h2>
+            
+            <p class="total-price">إجمالي الفاتورة: <span id="payment-amount">0.00</span> جنيه</p>
+
+            <div class="input-group">
+                <label for="payment-method">اختر وسيلة الدفع:</label>
+                <select id="payment-method" class="form-control">
+                    <option value="cash">نقداً عند الطاولة</option>
+                    <option value="card">بطاقة ائتمانية (الدفع الفوري)</option>
+                </select>
+            </div>
+
+            <button onclick="processPayment()" class="btn btn-primary">تأكيد الدفع</button>
+        </div>
+
+        <div id="confirmation-page" style="display:none;" class="card success-message">
+            <h2>✅ تم استلام طلبك!</h2>
+            <p>شكراً لطلبك من الطاولة رقم: <span id="confirmed-table-num"></span></p>
+            <p>سيتم تجهيز طلبك قريباً.</p>
+            <h3>تفاصيل الطلب:</h3>
+            <ul id="confirmed-order-details"></ul>
+            <button class="btn btn-info" onclick="window.location.reload()">طلب جديد</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

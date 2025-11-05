@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TapGo - لوحة تحكم الإدارة</title>
+    
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="container">
+            <h1>لوحة تحكم TapGo 🔒</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="cafe-info-management" class="card admin-card">
+            <h2>إدارة معلومات الكافيه</h2>
+            <div class="input-group">
+                <label for="cafe-name">اسم الكافيه/المطعم:</label>
+                <input type="text" id="cafe-name" class="form-control" value="TapGo Café">
+            </div>
+            <div class="input-group">
+                <label for="cafe-address">العنوان:</label>
+                <input type="text" id="cafe-address" class="form-control" value="شارع الجامعة، مبنى رقم 5">
+            </div>
+            <button class="btn btn-primary" onclick="saveCafeInfo()">حفظ المعلومات</button>
+            <p id="info-status" style="margin-top: 10px; font-weight: 700; color: var(--success-color);"></p>
+        </div>
+
+        <div id="orders-display" class="card admin-card">
+            <h2>الطلبات الواردة 🔔 <span id="pending-count">(0)</span></h2>
+            
+            <ul id="admin-orders-list" class="admin-orders-list">
+                <li style="text-align: center; color: #6c757d; padding: 10px;">لا توجد طلبات جديدة حالياً.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
