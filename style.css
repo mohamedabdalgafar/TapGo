@@ -57,7 +57,7 @@ header .container {
 }
 
 header .logo {
-    height: 40px;
+    height: 100px;
     margin-left: 10px;
 }
 
@@ -372,4 +372,5 @@ header h1 {
     font-size: 1.3rem;
     width: 100%;
     margin-top: 30px;
+
 }
