@@ -47,15 +47,9 @@
                 </div>
         </div>
 
-        <div id="cart-section" style="display:none;" class="card">
-            <h2>سلة الطلبات <span id="cart-count">(0)</span></h2>
-            <ul id="cart-list">
-                <li style="text-align: center; color: #6c757d;">السلة فارغة</li>
-            </ul>
-            
-            <p class="total-price">المجموع الكلي: <span id="cart-total">0.00</span> جنيه</p>
-            
-            <button id="checkout-btn" class="btn btn-success" style="display:none;" onclick="goToCheckout()">أكمل طلبك</button>
+        <div id="cart-section" style="display:none;">
+            <span id="cart-count">(0)</span>
+            <span id="cart-total">0.00</span>
         </div>
 
         <div id="checkout-page" style="display:none;" class="card">
@@ -83,7 +77,28 @@
             <button class="btn btn-info" onclick="window.location.reload()">طلب جديد</button>
         </div>
     </div>
+    
+    <button id="floating-cart-btn" class="floating-btn" style="display:none;" onclick="toggleCartModal()">
+        <img src="cart-icon.png" alt="Cart" style="height: 24px; width: 24px;">
+        <span id="floating-cart-count" class="badge">0</span>
+    </button>
 
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleCartModal()">&times;</span>
+            <h2>سلة طلباتك <span id="modal-cart-count" class="badge">0</span></h2>
+            
+            <div id="modal-cart-list">
+                </div>
+            
+            <p class="total-price modal-total">المجموع الكلي: <span id="modal-cart-total">0.00</span> جنيه</p>
+            
+            <button id="modal-checkout-btn" class="btn btn-primary btn-full-width" style="display:none;" onclick="goToCheckout()">
+                إتمام الطلب
+            </button>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
