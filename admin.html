@@ -3,236 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TapGo - لوحة التحكم</title>
-    <link rel="stylesheet" href="style.css"> 
-    
+    <title>لوحة إدارة TapGo</title>
+    <link rel="stylesheet" href="style.css">
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
     <script>
-        // ✅ كود التهيئة الخاص بمشروعك
         const firebaseConfig = {
-          apiKey: "AIzaSyD44pxiBHkzYZgCQPwJIk7f0HewG2RiqGM",
-          authDomain: "tapgo-2f386.firebaseapp.com",
-          databaseURL: "https://tapgo-2f386-default-rtdb.firebaseio.com",
-          projectId: "tapgo-2f386",
-          storageBucket: "tapgo-2f386.firebasestorage.app",
-          messagingSenderId: "514146345923",
-          appId: "1:514146345923:web:2bec7bc37222dc18d2d376",
-          measurementId: "G-YQJ1M8JJ1F"
+            apiKey: "AIzaSyD44pxiBHkzYZgCQPwJIk7f0HewG2RiqGM",
+            authDomain: "tapgo-2f386.firebaseapp.com",
+            databaseURL: "https://tapgo-2f386-default-rtdb.firebaseio.com",
+            projectId: "tapgo-2f386",
+            storageBucket: "tapgo-2f386.firebasestorage.app",
+            messagingSenderId: "514146345923",
+            appId: "1:514146345923:web:2bec7bc37222dc18d2d376",
+            measurementId: "G-YQJ1M8JJ1F"
         };
 
-        // تهيئة Firebase والوصول إلى قاعدة البيانات
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(); 
-        // ✅ متغير لـ Storage إذا احتجت إليه لاحقًا:
-        // const storage = firebase.storage(); 
+        const db = firebase.database();
     </script>
-    
-    <style>
-        /* إضافة ستايلات خاصة بواجهة الإدارة */
-        .admin-section {
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 80px 1.5fr 1fr 1fr 1fr 180px; /* تم تقليص ID وإضافة الصورة */
-            gap: 15px;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px dashed #ccc;
-        }
-        .order-grid {
-            /* تصميم خاص لجدول الطلبات */
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1.5fr 150px 100px; /* الطاولة، الإجمالي، الدفع، الأصناف، التاريخ، الحالة */
-            gap: 10px;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .order-row {
-            background-color: #fff;
-            margin-bottom: 5px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .header-row {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 10px !important;
-            font-weight: 900 !important;
-            border-bottom: none !important;
-            border-radius: 8px 8px 0 0;
-            margin-bottom: 0 !important;
-        }
-        .header-row > div {
-            font-weight: 900 !important;
-        }
-        .form-row {
-            display: flex;
-            gap: 20px;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: #e3f2fd;
-            border-radius: 8px;
-            flex-wrap: wrap;
-        }
-
-        /* ستايلات الواجهة المبوبة (Tabs) */
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px 5px 0 0;
-            margin-left: 5px;
-            transition: background-color 0.3s;
-        }
-        .tab-btn.active {
-            background-color: white;
-            border-bottom: 1px solid white;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        .tab-content {
-            border: 1px solid #dee2e6;
-            padding: 20px;
-            background-color: white;
-            border-radius: 0 5px 5px 5px;
-        }
-
-        /* ستايلات مرشح التاريخ */
-        .filter-controls {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f7f7f7;
-            border-radius: 8px;
-            align-items: flex-end;
-        }
-    </style>
 </head>
 <body>
-
-    <header>
-        <div class="container" style="justify-content: space-between;">
-            <h1>لوحة تحكم TapGo</h1>
-            <a href="index.html" class="btn btn-secondary">العودة لتطبيق العميل</a>
-        </div>
-    </header>
-
+<header>
     <div class="container">
-        
-        <div class="tabs">
-            <button class="tab-btn active" onclick="openTab(event, 'menuTab')">إدارة قائمة الطعام</button>
-            <button class="tab-btn" onclick="openTab(event, 'ordersTab')">الطلبات الواردة</button>
-        </div>
-
-        <div id="menuTab" class="tab-content" style="display: block;">
-            
-            <div class="card admin-section">
-                <h2>إضافة/تعديل عنصر في المنيو</h2>
-                <div class="form-row">
-                    
-                    <div class="input-group" style="display: none;">
-                        <label for="docId">معرّف المستند (Doc ID)</label>
-                        <input type="text" id="docId" class="form-control" readonly>
-                    </div>
-                    <div class="input-group" style="display: none;">
-                        <label for="itemId">معرّف العنصر (ID)</label>
-                        <input type="number" id="itemId" class="form-control" readonly>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="itemName">اسم العنصر</label>
-                        <input type="text" id="itemName" class="form-control" placeholder="قهوة، ساندويتش، إلخ." required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="itemImage">مسار/رابط الصورة (URL)</label>
-                        <input type="text" id="itemImage" class="form-control" placeholder="مثال: images/coffee.jpg أو رابط مباشر">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="itemPrice">السعر (جنيه)</label>
-                        <input type="number" id="itemPrice" class="form-control" step="0.01" placeholder="95.00" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="itemCategory">التصنيف</label>
-                        <select id="itemCategory" class="form-control" required>
-                            <option value="drinks">مشروبات</option>
-                            <option value="food">مأكولات</option>
-                            <option value="desserts">حلويات</option>
-                        </select>
-                    </div>
-
-                    <button id="saveItemBtn" class="btn btn-primary" onclick="saveMenuItem()">حفظ العنصر</button>
-                </div>
-            </div>
-
-            <div class="card admin-section">
-                <h2>قائمة المنيو الحالية</h2>
-
-                <div class="admin-grid header-row">
-                    <div>الـ ID</div>
-                    <div>الاسم</div>
-                    <div>السعر</div>
-                    <div>التصنيف</div>
-                    <div>الصورة</div>
-                    <div>الإجراءات</div>
-                </div>
-
-                <div id="menuList">
-                    </div>
-            </div>
-
-        </div> 
-        
-        <div id="ordersTab" class="tab-content" style="display: none;">
-            
-            <h2>الطلبات الواردة</h2>
-
-            <div class="filter-controls">
-                <div class="input-group">
-                    <label for="startDate">من تاريخ:</label>
-                    <input type="date" id="startDate" class="form-control">
-                </div>
-                <div class="input-group">
-                    <label for="endDate">إلى تاريخ:</label>
-                    <input type="date" id="endDate" class="form-control">
-                </div>
-                <button class="btn btn-info" onclick="filterOrders()">تطبيق المرشح</button>
-                <button class="btn btn-secondary" onclick="loadTodayOrders()">طلبات اليوم فقط</button>
-            </div>
-
-            <div id="ordersList">
-                <div class="order-grid header-row">
-                    <div>الطاولة</div>
-                    <div>الإجمالي</div>
-                    <div>طريقة الدفع</div>
-                    <div>الأصناف (الكمية)</div>
-                    <div>وقت الطلب</div>
-                    <div>الحالة</div>
-                </div>
-
-                <div id="ordersTableBody">
-                    <p style="text-align: center; padding: 20px;">يتم تحميل الطلبات...</p>
-                </div>
-            </div>
-
-        </div>
-
+        <img src="TapGoLogo.png" alt="TapGo Logo" class="logo">
+        <h1>لوحة إدارة TapGo</h1>
+        <a href="index.html" class="btn btn-secondary">عرض صفحة العميل</a>
     </div>
-    
-    <script src="admin.js"></script>
+</header>
+
+<div class="container admin-section">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(this,'menuContent')">🍔 إدارة قائمة الطعام</button>
+        <button class="tab-btn" onclick="openTab(this,'ordersContent')">🧾 الطلبات</button>
+    </div>
+
+    <!-- قائمة الطعام -->
+    <div id="menuContent" class="tab-content active">
+        <div class="card">
+            <h2>إضافة / تعديل عنصر في القائمة</h2>
+            <form id="menuForm" class="form-row" onsubmit="saveMenuItem(event)">
+                <div class="input-group"><label for="itemName">الاسم</label><input type="text" id="itemName" class="form-control" required></div>
+                <div class="input-group"><label for="itemPrice">السعر</label><input type="number" id="itemPrice" class="form-control" step="0.01" required></div>
+                <div class="input-group">
+                    <label for="itemCategory">التصنيف</label>
+                    <select id="itemCategory" class="form-control" required>
+                        <option value="food">مأكولات</option>
+                        <option value="drinks">مشروبات</option>
+                        <option value="desserts">حلويات</option>
+                    </select>
+                </div>
+                <div class="input-group"><label for="itemImage">الصورة</label><input type="text" id="itemImage" class="form-control" placeholder="رابط الصورة"></div>
+                <input type="hidden" id="itemDocId">
+                <button type="submit" class="btn btn-primary" id="submitBtn">إضافة عنصر</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>قائمة الطعام الحالية</h2>
+            <div class="scroll-wrapper">
+                <div class="header-row admin-grid">
+                    <div>ID</div><div>الاسم</div><div>السعر</div><div>التصنيف</div><div>الصورة</div><div>الإجراءات</div>
+                </div>
+                <div id="menuList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الطلبات -->
+    <div id="ordersContent" class="tab-content">
+        <div class="filter-controls" style="margin-bottom:15px;">
+            <div class="input-group">
+                <label for="startDate">من تاريخ</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="input-group">
+                <label for="endDate">إلى تاريخ</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
+            <div class="input-group">
+                <label for="filterStatus">فلتر حسب الحالة</label>
+                <select id="filterStatus" class="form-control" onchange="filterOrders()">
+                    <option value="new">جديد</option>
+                    <option value="in_progress">قيد التجهيز</option>
+                    <option value="delivered">تم التسليم</option>
+                    <option value="all">الكل</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" onclick="filterOrders()">تطبيق الفلتر</button>
+        </div>
+
+        <div class="card">
+            <h2>الطلبات</h2>
+            <div class="scroll-wrapper">
+                <div class="header-row order-grid">
+                    <div>الطاولة</div><div>الإجمالي</div><div>طريقة الدفع</div><div>الأصناف المطلوبة</div><div>وقت الطلب</div><div>الحالة/الإجراء</div>
+                </div>
+                <div id="ordersTableBody">
+                    <p style="text-align:center; padding:15px;">يتم تحميل الطلبات...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="admin.js"></script>
 </body>
 </html>
