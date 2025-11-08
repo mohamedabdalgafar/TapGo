@@ -305,3 +305,7 @@ header a.btn {
         width: 100%;
     }
 }
+.new-order {
+    background-color: #fff3cd !important;
+    transition: background-color 2s;
+}

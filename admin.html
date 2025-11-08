@@ -16,7 +16,7 @@
             authDomain: "tapgo-2f386.firebaseapp.com",
             databaseURL: "https://tapgo-2f386-default-rtdb.firebaseio.com",
             projectId: "tapgo-2f386",
-            storageBucket: "tapgo-2f386.firebasestorage.app",
+            storageBucket: "tapgo-2f386.appspot.com",
             messagingSenderId: "514146345923",
             appId: "1:514146345923:web:2bec7bc37222dc18d2d376",
             measurementId: "G-YQJ1M8JJ1F"
@@ -24,6 +24,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const storage = firebase.storage();
     </script>
 </head>
 <body>
@@ -46,8 +47,14 @@
         <div class="card">
             <h2>إضافة / تعديل عنصر في القائمة</h2>
             <form id="menuForm" class="form-row" onsubmit="saveMenuItem(event)">
-                <div class="input-group"><label for="itemName">الاسم</label><input type="text" id="itemName" class="form-control" required></div>
-                <div class="input-group"><label for="itemPrice">السعر</label><input type="number" id="itemPrice" class="form-control" step="0.01" required></div>
+                <div class="input-group">
+                    <label for="itemName">الاسم</label>
+                    <input type="text" id="itemName" class="form-control" required>
+                </div>
+                <div class="input-group">
+                    <label for="itemPrice">السعر</label>
+                    <input type="number" id="itemPrice" class="form-control" step="0.01" required>
+                </div>
                 <div class="input-group">
                     <label for="itemCategory">التصنيف</label>
                     <select id="itemCategory" class="form-control" required>
@@ -56,7 +63,10 @@
                         <option value="desserts">حلويات</option>
                     </select>
                 </div>
-                <div class="input-group"><label for="itemImage">الصورة</label><input type="text" id="itemImage" class="form-control" placeholder="رابط الصورة"></div>
+                <div class="input-group">
+                    <label for="itemImage">الصورة</label>
+                    <input type="file" id="itemImage" class="form-control" accept="image/*">
+                </div>
                 <input type="hidden" id="itemDocId">
                 <button type="submit" class="btn btn-primary" id="submitBtn">إضافة عنصر</button>
             </form>
@@ -75,15 +85,8 @@
 
     <!-- الطلبات -->
     <div id="ordersContent" class="tab-content">
+        <!-- فلتر الطلبات -->
         <div class="filter-controls" style="margin-bottom:15px;">
-            <div class="input-group">
-                <label for="startDate">من تاريخ</label>
-                <input type="date" id="startDate" class="form-control">
-            </div>
-            <div class="input-group">
-                <label for="endDate">إلى تاريخ</label>
-                <input type="date" id="endDate" class="form-control">
-            </div>
             <div class="input-group">
                 <label for="filterStatus">فلتر حسب الحالة</label>
                 <select id="filterStatus" class="form-control" onchange="filterOrders()">
@@ -93,6 +96,14 @@
                     <option value="all">الكل</option>
                 </select>
             </div>
+            <div class="input-group">
+                <label for="startDate">من تاريخ</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="input-group">
+                <label for="endDate">إلى تاريخ</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
             <button class="btn btn-secondary" onclick="filterOrders()">تطبيق الفلتر</button>
         </div>
 
@@ -100,7 +111,14 @@
             <h2>الطلبات</h2>
             <div class="scroll-wrapper">
                 <div class="header-row order-grid">
-                    <div>الطاولة</div><div>الإجمالي</div><div>طريقة الدفع</div><div>الأصناف المطلوبة</div><div>وقت الطلب</div><div>الحالة/الإجراء</div>
+                    <div>رقم الطلب</div>
+                    <div>الطاولة</div>
+                    <div>الأصناف</div>
+                    <div>الملاحظات</div>
+                    <div>الإجمالي</div>
+                    <div>طريقة الدفع</div>
+                    <div>وقت الطلب</div>
+                    <div>الحالة / الإجراءات</div>
                 </div>
                 <div id="ordersTableBody">
                     <p style="text-align:center; padding:15px;">يتم تحميل الطلبات...</p>
