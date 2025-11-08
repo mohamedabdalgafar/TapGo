@@ -87,6 +87,7 @@ header a.btn {
     box-shadow: var(--card-shadow);
     padding: 20px;
     margin-bottom: 20px;
+    margin-Top: 20px;
     transition: transform 0.3s ease;
 }
 
@@ -315,6 +316,3 @@ header a.btn {
     overflow-x: auto; /* keeps horizontal scrolling if needed */
     max-width: 100%;  /* ensures it does not overflow container */
 }
-
-
-
