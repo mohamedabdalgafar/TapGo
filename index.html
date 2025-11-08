@@ -6,9 +6,7 @@
     <title>TapGo - طلبات الطاولات الذكية</title>
     
     <link rel="stylesheet" href="style.css"> 
-    
     <script src="html5-qrcode.min.js"></script> 
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -29,222 +27,120 @@
     </script>
 
     <style>
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .menu-item {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            text-align: center;
-        }
-        
-        .menu-item img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-        
-        .item-details {
-            padding: 15px;
-        }
-        
-        .menu-categories {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .floating-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--secondary-color, #ff9800);
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 50;
-            border: none;
-        }
-        
-        .floating-btn .badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: var(--danger-color, #f44336);
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            line-height: 1;
-        }
-        
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.4); 
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto; 
-            padding: 20px;
-            border: 1px solid #888;
-            width: 95%;
-            max-width: 600px;
-            border-radius: 10px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .close-btn {
-            color: #aaa;
-            float: left;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        
-        .modal-total {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--primary-color, #6d4c41);
-        }
-        
-        .cart-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            table-layout: fixed;
-            word-wrap: break-word;
-        }
-        
-        .cart-table th, .cart-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: right;
-            font-size: 0.9rem;
-        }
-        
-        .cart-table th {
-            background-color: var(--bg-light, #f5f5f5);
-        }
-        
-        .btn-full-width {
-            width: 100%;
-            margin-top: 10px;
-        }
+        body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f9f9f9; }
+        header { background: #6d4c41; color: white; padding: 15px; text-align:center; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .card { background:white; padding:20px; margin-bottom:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+        .btn { padding:10px 15px; cursor:pointer; border:none; border-radius:5px; }
+        .btn-primary { background:#6d4c41; color:white; }
+        .btn-secondary { background:#eee; color:#333; }
+        .btn-success { background:#4caf50; color:white; }
+        .input-group { margin-bottom:15px; }
+        .form-control { padding:8px; width:100%; box-sizing:border-box; border-radius:5px; border:1px solid #ccc; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .menu-item { background-color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); overflow: hidden; text-align: center; }
+        .menu-item img { width: 100%; height: 150px; object-fit: cover; }
+        .item-details { padding: 15px; }
+        .menu-categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .floating-btn { position: fixed; bottom: 20px; right: 20px; background-color:#ff9800; color: white; width: 60px; height: 60px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:1.1rem; cursor:pointer; z-index:50; padding:0; border:none; }
+        .floating-btn .badge { position: absolute; top:5px; right:5px; background-color:#f44336; color:white; border-radius:50%; padding:2px 6px; font-size:0.75rem; font-weight:bold; line-height:1; }
+        .modal { display: none; position: fixed; z-index: 1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding:20px; border-radius:10px; width:90%; max-width:600px; }
+        .close-btn { color:#aaa; float:left; font-size:28px; font-weight:bold; }
+        .cart-table { width:100%; border-collapse:collapse; margin-top:15px; }
+        .cart-table th, .cart-table td { border:1px solid #ddd; padding:8px; text-align:right; font-size:0.9rem; }
+        .cart-table th { background-color:#f5f5f5; }
+        .btn-full-width { width:100%; margin-top:10px; }
+        .success-message { text-align:center; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="container">
-            <img src="TapGoLogo.png" alt="TapGo Logo" class="logo">
-            <h1>TapGo - طلبات الطاولات الذكية</h1>
+<header>
+    <h1>TapGo - طلبات الطاولات الذكية</h1>
+</header>
+
+<div class="container">
+
+    <!-- Check order status -->
+    <div id="check-order-section" class="card">
+        <h3>الاستعلام عن حالة طلبك</h3>
+        <div class="input-group">
+            <input type="text" id="status-order-id" class="form-control" placeholder="أدخل رقم الطلب">
+            <button class="btn btn-primary btn-full-width" onclick="checkOrderStatus()">تحقق</button>
+            <div id="order-status-result" style="margin-top: 10px; font-weight: bold;"></div>
         </div>
-    </header>
-
-    <div class="container">
-        <div id="table-number-section" class="card">
-            <h2>أهلاً بك في TapGo!</h2>
-            <p>يرجى مسح **رمز QR** الموجود على الطاولة لبدء طلبك.</p>
-            
-            <button id="start-scan-btn" class="btn btn-primary" onclick="startQrScanner()">
-                بدء مسح رمز الطاولة
-            </button>
-
-            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 20px auto; display: none;"></div>
-
-            <p id="table-display" class="table-info" style="display: none; text-align: center; font-size: 1.2rem; color: var(--success-color);"></p>
-        </div>
-
-        <div id="menu-section" style="display:none;">
-            <h2>قائمة الطعام والشراب</h2>
-            
-            <div class="menu-categories">
-                <button class="btn btn-secondary active" data-category="all" onclick="filterMenu('all', event)">الكل</button>
-                <button class="btn btn-secondary" data-category="drinks" onclick="filterMenu('drinks', event)">مشروبات</button>
-                <button class="btn btn-secondary" data-category="food" onclick="filterMenu('food', event)">مأكولات</button>
-                <button class="btn btn-secondary" data-category="desserts" onclick="filterMenu('desserts', event)">حلويات</button>
-            </div>
-
-            <div id="menu-items" class="menu-grid">
-                <p id="loading-menu" style="text-align: center; color: #6c757d;">يتم تحميل قائمة الطعام...</p>
-            </div>
-        </div>
-
-        <div id="checkout-page" style="display:none;" class="card">
-            <h2>عملية الدفع</h2>
-            
-            <p class="total-price" style="font-size: 1.4rem; color: var(--danger-color);">إجمالي الفاتورة: <span id="payment-amount">0.00</span> جنيه</p>
-
-            <div class="input-group">
-                <label for="payment-method">اختر وسيلة الدفع:</label>
-                <select id="payment-method" name="paymentMethod" class="form-control" autocomplete="payment-method">
-                    <option value="cash">نقداً عند الطاولة</option>
-                    <option value="card">بطاقة ائتمانية (الدفع الفوري)</option>
-                </select>
-            </div>
-
-            <button onclick="processPayment()" class="btn btn-success btn-full-width">تأكيد الطلب</button>
-            <button onclick="toggleCartModal()" class="btn btn-secondary btn-full-width" style="margin-top: 10px;">العودة للسلة</button>
-        </div>
-
-        <div id="confirmation-page" style="display:none;" class="card success-message">
-            <h2>✅ تم استلام طلبك!</h2>
-            <p>شكراً لطلبك من الطاولة رقم: <span id="confirmed-table-num"></span></p>
-            <p><strong>الإجمالي المدفوع:</strong> <span id="confirmed-total-amount" style="font-weight: bold;"></span> جنيه</p>
-            
-            <h3>تفاصيل الطلب:</h3>
-            <ul id="confirmed-order-details" style="list-style: disc inside; text-align: right; padding-right: 20px;"></ul>
-            <p style="margin-top: 20px;">سيتم تجهيز طلبك قريباً.</p>
-            <button class="btn btn-info" onclick="window.location.reload()">بدء طلب جديد</button>
-        </div>
+        <p id="top-order-status-display" style="margin-top:10px; font-weight:bold;"></p>
     </div>
-    
-    <button id="floating-cart-btn" class="floating-btn" style="display:none;" onclick="toggleCartModal()">
-        <img src="cart-icon.png" alt="Cart" style="height: 24px; width: 24px;"> 
-        <span id="floating-cart-count" class="badge">0</span>
-    </button>
 
-    <div id="cart-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleCartModal()">&times;</span>
-            <h2>سلة طلباتك <span id="modal-cart-count" class="badge">0</span></h2>
+    <!-- Table QR scan -->
+    <div id="table-number-section" class="card">
+        <h2>أهلاً بك في TapGo!</h2>
+        <p>يرجى مسح رمز QR الموجود على الطاولة لبدء طلبك.</p>
+        <button id="start-scan-btn" class="btn btn-primary" onclick="startQrScanner()">بدء مسح رمز الطاولة</button>
+        <div id="qr-reader" style="width:100%; max-width:400px; margin:20px auto; display:none;"></div>
+        <p id="table-display" style="display:none; text-align:center; font-size:1.2rem; color:green;"></p>
+    </div>
 
-            <table class="cart-table" id="modal-cart-list"></table>
-
-            <p class="total-price modal-total">
-            المجموع الكلي: <span id="modal-cart-total">0.00</span> جنيه
-            </p>
-
-            <button id="modal-checkout-btn" class="btn btn-success btn-full-width" style="display:none;" onclick="goToCheckout()">
-            إتمام الطلب
-            </button>
+    <!-- Menu -->
+    <div id="menu-section" style="display:none;">
+        <h2>قائمة الطعام والشراب</h2>
+        <div class="menu-categories">
+            <button class="btn btn-secondary active" data-category="all" onclick="filterMenu('all', event)">الكل</button>
+            <button class="btn btn-secondary" data-category="drinks" onclick="filterMenu('drinks', event)">مشروبات</button>
+            <button class="btn btn-secondary" data-category="food" onclick="filterMenu('food', event)">مأكولات</button>
+            <button class="btn btn-secondary" data-category="desserts" onclick="filterMenu('desserts', event)">حلويات</button>
+        </div>
+        <div id="menu-items" class="menu-grid">
+            <p id="loading-menu" style="text-align:center; color:#6c757d;">يتم تحميل قائمة الطعام...</p>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Checkout -->
+    <div id="checkout-page" style="display:none;" class="card">
+        <h2>عملية الدفع</h2>
+        <p class="total-price" style="font-size:1.4rem; color:red;">إجمالي الفاتورة: <span id="payment-amount">0.00</span> جنيه</p>
+        <div class="input-group">
+            <label for="payment-method">اختر وسيلة الدفع:</label>
+            <select id="payment-method" name="paymentMethod" class="form-control">
+                <option value="cash">نقداً عند الطاولة</option>
+                <option value="card">بطاقة ائتمانية</option>
+            </select>
+        </div>
+        <button onclick="processPayment()" class="btn btn-success btn-full-width">تأكيد الطلب</button>
+        <button onclick="toggleCartModal()" class="btn btn-secondary btn-full-width">العودة للسلة</button>
+    </div>
+
+    <!-- Confirmation -->
+    <div id="confirmation-page" style="display:none;" class="card success-message">
+        <h2>✅ تم استلام طلبك!</h2>
+        <p>رقم الطلب: <strong id="confirmed-order-id"></strong></p>
+        <p>شكراً لطلبك من الطاولة رقم: <span id="confirmed-table-num"></span></p>
+        <p><strong>الإجمالي المدفوع:</strong> <span id="confirmed-total-amount"></span> جنيه</p>
+        <h3>تفاصيل الطلب:</h3>
+        <ul id="confirmed-order-details" style="list-style: disc inside; text-align:right; padding-right:20px;"></ul>
+        <p style="margin-top:20px;">سيتم تجهيز طلبك قريباً.</p>
+        <button class="btn btn-info" onclick="window.location.reload()">بدء طلب جديد</button>
+    </div>
+</div>
+
+<!-- Floating Cart -->
+<button id="floating-cart-btn" class="floating-btn" style="display:none;" onclick="toggleCartModal()">
+    <img src="cart-icon.png" alt="Cart" style="height:24px; width:24px;">
+    <span id="floating-cart-count" class="badge">0</span>
+</button>
+
+<!-- Cart Modal -->
+<div id="cart-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="toggleCartModal()">&times;</span>
+        <h2>سلة طلباتك <span id="modal-cart-count" class="badge">0</span></h2>
+        <div id="modal-cart-list"></div>
+        <p class="total-price modal-total">المجموع الكلي: <span id="modal-cart-total">0.00</span> جنيه</p>
+        <button id="modal-checkout-btn" class="btn btn-success btn-full-width" style="display:none;" onclick="goToCheckout()">إتمام الطلب</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>

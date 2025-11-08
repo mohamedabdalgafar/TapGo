@@ -1,239 +1,239 @@
-let cart = [];
 let tableNumber = null;
-let html5QrCode = null;
-let menuProducts = [];
+let cart = [];
+let allMenuItems = [];
+let newOrderSound = new Audio('https://www.soundjay.com/button/beep-07.mp3'); // iPhone-style alert
 
-document.addEventListener('DOMContentLoaded', () => {
-    subscribeToMenuUpdates();
-});
-
-// ================= QR Scanner =================
+// ======================================
+// QR Scanner
+// ======================================
 function startQrScanner() {
-    if (typeof Html5Qrcode === 'undefined') {
-        alert('⚠️ مكتبة مسح QR Code غير متوفرة.');
-        return;
-    }
-    document.getElementById('start-scan-btn').style.display = 'none';
     document.getElementById('qr-reader').style.display = 'block';
-    html5QrCode = new Html5Qrcode("qr-reader");
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, () => {})
-        .catch(err => {
-            alert("⚠️ لا يمكن الوصول إلى الكاميرا.");
-            document.getElementById('start-scan-btn').style.display = 'block';
-            document.getElementById('qr-reader').style.display = 'none';
-            console.error(err);
+    const qrScanner = new Html5Qrcode("qr-reader");
+    qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+            // Extract only numeric characters
+            const numericTable = qrCodeMessage.match(/\d+/);
+            if (numericTable) {
+                tableNumber = numericTable[0];
+                document.getElementById('table-display').textContent = `رقم الطاولة: ${tableNumber}`;
+                document.getElementById('table-display').style.display = 'block';
+                document.getElementById('table-number-section').style.display = 'none';
+                document.getElementById('menu-section').style.display = 'block';
+                qrScanner.stop();
+            } else {
+                alert('رمز الطاولة لا يحتوي على رقم صالح.');
+            }
+        },
+        errorMessage => console.warn(errorMessage)
+    ).catch(err => console.error(err));
+}
+
+
+
+// ======================================
+// Load Menu
+// ======================================
+function loadMenu() {
+    db.ref('menu').once('value').then(snapshot => {
+        allMenuItems = [];
+        snapshot.forEach(child => {
+            let item = child.val();
+            item.key = child.key;
+            allMenuItems.push(item);
         });
+        displayMenu(allMenuItems);
+    });
 }
 
-function onScanSuccess(decodedText) {
-    const numMatch = decodedText.match(/\d+/);
-    if (!numMatch) { alert("رمز QR غير صالح."); return; }
-    tableNumber = numMatch[0];
-    html5QrCode.stop();
-    document.getElementById('qr-reader').style.display = 'none';
-    document.getElementById('table-number-section').style.display = 'none';
-    document.getElementById('table-display').textContent = `✅ الطلب للطاولة رقم: ${tableNumber}`;
-    document.getElementById('table-display').style.display = 'block';
-    document.getElementById('menu-section').style.display = 'block';
-}
-
-// ================= Menu =================
-function subscribeToMenuUpdates() {
-    document.getElementById('loading-menu').style.display = 'block';
-    db.ref('menu').on('value', snapshot => {
-        menuProducts = [];
-        if (snapshot.exists()) {
-            snapshot.forEach(child => {
-                const item = child.val();
-                menuProducts.push({ ...item, docId: child.key });
-            });
-        }
-        document.getElementById('loading-menu').style.display = 'none';
-        displayMenuItems();
-    }, error => console.error(error));
-}
-
-function displayMenuItems(category = 'all') {
-    const container = document.getElementById('menu-items');
-    container.innerHTML = '';
-    if (!menuProducts.length) {
-        container.innerHTML = '<p style="text-align:center; color:#6c757d; padding:20px;">قائمة الطعام فارغة حالياً.</p>';
+function displayMenu(items) {
+    const menuContainer = document.getElementById('menu-items');
+    menuContainer.innerHTML = '';
+    if (items.length === 0) {
+        menuContainer.innerHTML = '<p style="text-align:center;">لا يوجد عناصر حالياً</p>';
         return;
     }
-    const filtered = category === 'all' ? menuProducts : menuProducts.filter(p => p.category === category);
-    filtered.forEach(product => {
-        container.innerHTML += `
-            <div class="menu-item" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
-                <img src="${product.image || 'default.jpg'}" alt="${product.name}">
-                <div class="item-details">
-                    <h3>${product.name}</h3>
-                    <p class="price">${product.price.toFixed(2)} جنيه</p>
-                    <input type="text" id="note-${product.id}" placeholder="أضف ملاحظة..." style="width:90%; margin-bottom:5px;">
-                    <button class="btn" onclick="addToCart(this)">أضف للسلة</button>
-                </div>
+    items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('menu-item');
+        itemDiv.innerHTML = `
+            <img src="${item.image || 'placeholder.png'}" alt="${item.name}">
+            <div class="item-details">
+                <h3>${item.name}</h3>
+                <p>${item.price.toFixed(2)} جنيه</p>
+                <button class="btn btn-primary" onclick="addToCart('${item.key}')">أضف للسلة</button>
             </div>
         `;
+        menuContainer.appendChild(itemDiv);
     });
 }
 
-function filterMenu(category, event) {
-    document.querySelectorAll('.menu-categories .btn').forEach(btn => btn.classList.remove('active'));
-    if (event && event.target) event.target.classList.add('active');
-    displayMenuItems(category);
-}
-
-// ================= Cart =================
-function addToCart(btn) {
-    const el = btn.closest('.menu-item');
-    const id = parseInt(el.getAttribute('data-id'));
-    const name = el.getAttribute('data-name');
-    const price = parseFloat(el.getAttribute('data-price'));
-    const note = document.getElementById(`note-${id}`).value || '';
-
-    const existing = cart.find(i => i.id === id && i.note === note);
-    if (existing) existing.quantity += 1;
-    else cart.push({ id, name, price, quantity: 1, note });
-
-    updateCartDisplay();
-}
-
-function removeFromCart(id) {
-    cart = cart.filter(i => i.id !== id);
-    updateCartDisplay();
-}
-
-function updateItemQuantity(id, change) {
-    const item = cart.find(i => i.id === id);
-    if (!item) return;
-    item.quantity += change;
-    if (item.quantity <= 0) removeFromCart(id);
-    else updateCartDisplay();
-}
-
-function updateCartDisplay() {
-    const cartListContainer = document.getElementById('modal-cart-list');
-    const modalCartTotalElement = document.getElementById('modal-cart-total');
-    const modalCartCount = document.getElementById('modal-cart-count');
-    const floatingCartBtn = document.getElementById('floating-cart-btn');
-    const floatingCartCount = document.getElementById('floating-cart-count');
-    const modalCheckoutBtn = document.getElementById('modal-checkout-btn');
-
-    if (!cartListContainer || !modalCartTotalElement || !modalCartCount || !floatingCartBtn || !floatingCartCount || !modalCheckoutBtn) return;
-
-    let total = 0;
-    let itemCount = 0;
-    cartListContainer.innerHTML = '';
-
-    if (!cart.length) {
-        floatingCartBtn.style.display = 'none';
-        modalCheckoutBtn.style.display = 'none';
-        cartListContainer.innerHTML = '<p style="text-align:center; color:#6c757d;">سلة طلباتك فارغة.</p>';
-        modalCartTotalElement.textContent = '0.00';
-        modalCartCount.textContent = '(0)';
-        floatingCartCount.textContent = '0';
-        return;
+function filterMenu(category, e) {
+    document.querySelectorAll('.menu-categories button').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    if (category === 'all') {
+        displayMenu(allMenuItems);
+    } else {
+        displayMenu(allMenuItems.filter(i => i.category === category));
     }
+}
 
-    floatingCartBtn.style.display = 'flex';
+// ======================================
+// Cart Management
+// ======================================
+function addToCart(itemKey) {
+    const item = allMenuItems.find(i => i.key === itemKey);
+    if (!item) return;
+    const existing = cart.find(i => i.key === itemKey);
+    if (existing) existing.quantity++;
+    else cart.push({...item, quantity: 1, note: ''});
+    updateCartUI();
+    document.getElementById('floating-cart-btn').style.display = 'flex';
+}
 
-    const table = document.createElement('table');
-    table.className = 'cart-table';
-    table.innerHTML = `
-        <thead>
-            <tr><th>الصنف</th><th>السعر</th><th>الكمية</th><th>ملاحظة</th><th>المجموع</th><th>الإجراءات</th></tr>
-        </thead>
-        <tbody></tbody>
-    `;
-    const tbody = table.querySelector('tbody');
-
+function updateCartUI() {
+    const cartList = document.getElementById('modal-cart-list');
+    cartList.innerHTML = '';
+    let total = 0;
     cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        itemCount += item.quantity;
-
-        const row = document.createElement('tr');
+        total += item.price * item.quantity;
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.marginBottom = '8px';
         row.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.price.toFixed(2)}</td>
-            <td>
-                <button onclick="updateItemQuantity(${item.id},1)">+</button>
-                ${item.quantity}
-                <button onclick="updateItemQuantity(${item.id},-1)">-</button>
-            </td>
-            <td>${item.note || ''}</td>
-            <td>${itemTotal.toFixed(2)}</td>
-            <td><button onclick="removeFromCart(${item.id})">إزالة</button></td>
+            <span>${item.name} x${item.quantity}</span>
+            <input type="text" placeholder="ملاحظة" value="${item.note}" style="width:50%" oninput="updateNote(${index}, this.value)">
+            <button onclick="removeFromCart(${index})">حذف</button>
         `;
-        tbody.appendChild(row);
+        cartList.appendChild(row);
     });
+    document.getElementById('modal-cart-total').textContent = total.toFixed(2);
+    document.getElementById('modal-cart-count').textContent = cart.length;
+    document.getElementById('floating-cart-count').textContent = cart.length;
+    document.getElementById('modal-checkout-btn').style.display = cart.length > 0 ? 'block' : 'none';
+}
 
-    cartListContainer.appendChild(table);
-    modalCartTotalElement.textContent = total.toFixed(2);
-    modalCartCount.textContent = `(${itemCount})`;
-    floatingCartCount.textContent = itemCount;
-    modalCheckoutBtn.style.display = 'block';
+function updateNote(index, value) {
+    cart[index].note = value;
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartUI();
 }
 
 function toggleCartModal() {
     const modal = document.getElementById('cart-modal');
-    if (!modal) return;
-    modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
 }
 
-// ================= Checkout =================
+// ======================================
+// Checkout & Order Submission
+// ======================================
 function goToCheckout() {
-    if (!tableNumber) { alert("يجب مسح رمز الطاولة أولاً."); return; }
-    if (!cart.length) { alert("السلة فارغة."); return; }
-
-    document.getElementById('cart-modal').style.display = 'none';
-    document.getElementById('floating-cart-btn').style.display = 'none';
+    toggleCartModal();
     document.getElementById('menu-section').style.display = 'none';
-
-    const total = parseFloat(document.getElementById('modal-cart-total').textContent);
-    document.getElementById('payment-amount').textContent = total.toFixed(2);
     document.getElementById('checkout-page').style.display = 'block';
+    const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    document.getElementById('payment-amount').textContent = total.toFixed(2);
+}
+
+function generateShortOrderId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letters = chars.charAt(Math.floor(Math.random() * chars.length)) +
+                    chars.charAt(Math.floor(Math.random() * chars.length));
+    const numbers = Math.floor(1000 + Math.random() * 9000);
+    return `ORD-${letters}${numbers}`;
 }
 
 function processPayment() {
-    if (!cart.length) { alert("السلة فارغة."); return; }
+    if (!tableNumber) return alert('رقم الطاولة غير محدد!');
+    if (cart.length === 0) return alert('السلة فارغة!');
 
-    const total = parseFloat(document.getElementById('payment-amount').textContent);
-    const paymentMethod = document.getElementById('payment-method').value;
-
-    const newOrder = {
+    const orderData = {
         tableNumber,
-        items: JSON.parse(JSON.stringify(cart)),
-        paymentMethod,
-        total,
-        status: 'new',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        items: cart,
+        total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
+        paymentMethod: document.getElementById('payment-method').value,
+        timestamp: Date.now(),
+        orderId: generateShortOrderId(),
+        status: 'new'
     };
 
-    db.ref('orders').push(newOrder)
-        .then(() => {
-            cart = [];
-            updateCartDisplay();
-            document.getElementById('checkout-page').style.display = 'none';
-            displayConfirmation(newOrder);
-        })
-        .catch(err => {
-            console.error(err);
-            alert("فشل إرسال الطلب.");
-        });
+    db.ref('orders').push(orderData)
+      .then(() => {
+          showConfirmation(orderData);
+          cart = [];
+          updateCartUI();
+      })
+      .catch(err => console.error(err));
 }
 
-function displayConfirmation(order) {
-    document.getElementById('confirmed-table-num').textContent = order.tableNumber;
-    document.getElementById('confirmed-total-amount').textContent = order.total.toFixed(2);
+// ======================================
+// Confirmation Page
+// ======================================
+function showConfirmation(orderData) {
+    document.getElementById('confirmed-table-num').textContent = orderData.tableNumber;
+    document.getElementById('confirmed-total-amount').textContent = orderData.total.toFixed(2);
 
-    const ul = document.getElementById('confirmed-order-details');
-    ul.innerHTML = '';
-    order.items.forEach(item => {
+    const orderIdDisplay = document.getElementById('confirmed-order-id');
+    if (orderIdDisplay) {
+        orderIdDisplay.textContent = orderData.orderId;
+        orderIdDisplay.style.fontWeight = 'bold';
+        orderIdDisplay.style.color = '#ff5722';
+    }
+
+    const detailsUl = document.getElementById('confirmed-order-details');
+    detailsUl.innerHTML = '';
+    orderData.items.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = `${item.name} (x${item.quantity})${item.note ? ' - ملاحظة: ' + item.note : ''} - السعر: ${(item.price * item.quantity).toFixed(2)} جنيه`;
-        ul.appendChild(li);
+        li.textContent = `${item.name} x${item.quantity}${item.note ? ' (ملاحظة: '+item.note+')' : ''}`;
+        detailsUl.appendChild(li);
     });
 
     document.getElementById('confirmation-page').style.display = 'block';
+    document.getElementById('checkout-page').style.display = 'none';
 }
+
+// ======================================
+// Order Status Check
+// ======================================
+function checkOrderStatus() {
+    const orderId = document.getElementById('status-order-id').value.trim();
+    if (!orderId) return;
+
+    db.ref('orders').orderByChild('orderId').equalTo(orderId).once('value').then(snapshot => {
+        const resultDiv = document.getElementById('order-status-result');
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const order = child.val();
+                resultDiv.innerHTML = `
+                    <p>الطلب: ${orderId}</p>
+                    <p>الحالة: ${order.status || 'قيد التجهيز'}</p>
+                    <p>إجمالي الفاتورة: ${order.total.toFixed(2)} جنيه</p>
+                `;
+            });
+        } else {
+            document.getElementById('order-status-result').textContent = 'لم يتم العثور على الطلب.';
+        }
+    });
+}
+
+
+// ======================================
+// Real-time New Order Notification
+// ======================================
+db.ref('orders').on('child_added', snapshot => {
+    if (!tableNumber) return;
+    newOrderSound.play(); // play iPhone-style sound on any new order
+});
+
+// ======================================
+// Initialize Menu
+// ======================================
+window.onload = () => {
+    loadMenu();
+};
+

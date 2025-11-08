@@ -381,19 +381,3 @@ function printOrder(docId) {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
 }
-function addNewOrder(orderData) {
-    // Generate a unique order ID
-    const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    orderData.orderId = orderId;
-
-    // Add timestamp if not already
-    if (!orderData.timestamp) orderData.timestamp = Date.now();
-
-    db.ref('orders').push(orderData)
-        .then(() => {
-            console.log('✅ تم إضافة الطلب الجديد برقم:', orderId);
-        })
-        .catch(error => {
-            console.error('خطأ عند إضافة الطلب:', error);
-        });
-}
