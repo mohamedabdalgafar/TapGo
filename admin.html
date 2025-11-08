@@ -26,8 +26,6 @@
         const db = firebase.database();
         const storage = firebase.storage();
     </script>
-
-
 </head>
 <body>
 <header>
@@ -88,23 +86,36 @@
     <!-- الطلبات -->
     <div id="ordersContent" class="tab-content">
         <div class="filter-controls">
-            <div class="input-group">
-                <label for="startDate">من تاريخ</label>
-                <input type="date" id="startDate" class="form-control">
+            <div>
+                <label>
+                    <input type="radio" name="dateFilter" value="today" checked> اليوم
+                </label>
+                <label>
+                    <input type="radio" name="dateFilter" value="custom"> نطاق مخصص
+                </label>
             </div>
-            <div class="input-group">
-                <label for="endDate">إلى تاريخ</label>
-                <input type="date" id="endDate" class="form-control">
+
+            <div id="customDates" style="display: none; margin-top: 10px;">
+                <div class="input-group">
+                    <label for="startDate">من تاريخ</label>
+                    <input type="date" id="startDate" class="form-control">
+                </div>
+                <div class="input-group">
+                    <label for="endDate">إلى تاريخ</label>
+                    <input type="date" id="endDate" class="form-control">
+                </div>
             </div>
+
             <div class="input-group">
                 <label for="filterStatus">فلتر حسب الحالة</label>
-                <select id="filterStatus" class="form-control" onchange="filterOrders()">
+                <select id="filterStatus" class="form-control">
                     <option value="new">جديد</option>
                     <option value="in_progress">قيد التجهيز</option>
                     <option value="delivered">تم التسليم</option>
                     <option value="all">الكل</option>
                 </select>
             </div>
+
             <button class="btn btn-secondary" onclick="filterOrders()">تطبيق الفلتر</button>
         </div>
 

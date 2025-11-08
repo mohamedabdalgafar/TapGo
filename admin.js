@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
     subscribeToOrdersUpdates();
     openTab(document.querySelector('.tab-btn.active'), 'menuContent');
+    initDateFilter(); // set up today/custom radio buttons
     loadTodayOrders(); // filter today by default
 });
 
@@ -244,34 +245,64 @@ function updateOrderStatus(docId, currentStatus) {
 // 4. تصفية الطلبات حسب التاريخ والحالة
 // ====================================
 
+function initDateFilter() {
+    const radios = document.querySelectorAll('input[name="dateFilter"]');
+    radios.forEach(r => {
+        r.addEventListener('change', () => {
+            const customDiv = document.getElementById('customDates');
+            if (r.value === 'custom' && r.checked) {
+                customDiv.style.display = 'block';
+                fillTodayInCustomDates();
+            } else {
+                customDiv.style.display = 'none';
+                loadTodayOrders();
+            }
+        });
+    });
+}
+
+function fillTodayInCustomDates() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+}
+
 function filterOrders() {
-    const startInput = document.getElementById('startDate')?.value;
-    const endInput = document.getElementById('endDate')?.value;
     const statusFilter = document.getElementById('filterStatus').value;
+    const dateFilter = document.querySelector('input[name="dateFilter"]:checked').value;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
+    let startTimestamp, endTimestamp;
 
-    let startTimestamp = todayTimestamp; // default today
-    let endTimestamp = Infinity;
+    if (dateFilter === 'today') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        startTimestamp = today.getTime();
+        endTimestamp = startTimestamp + 86399999;
+    } else {
+        const startInput = document.getElementById('startDate')?.value;
+        const endInput = document.getElementById('endDate')?.value;
 
-    if (startInput) {
+        if (!startInput || !endInput) {
+            alert('الرجاء تحديد تاريخ البداية والنهاية.');
+            return;
+        }
+
         const startDate = new Date(startInput);
-        startDate.setHours(0, 0, 0, 0);
-        startTimestamp = startDate.getTime();
-    }
-
-    if (endInput) {
         const endDate = new Date(endInput);
+        startDate.setHours(0, 0, 0, 0);
         endDate.setHours(23, 59, 59, 999);
+
+        startTimestamp = startDate.getTime();
         endTimestamp = endDate.getTime();
     }
 
     const filteredOrders = allOrders.filter(order => {
         if (!order.timestamp) return false;
-        const inDateRange = order.timestamp >= startTimestamp && order.timestamp <= endTimestamp;
+
+        const orderTime = new Date(order.timestamp).getTime();
+        const inDateRange = orderTime >= startTimestamp && orderTime <= endTimestamp;
         const statusMatch = statusFilter === 'all' || order.status === statusFilter;
+
         return inDateRange && statusMatch;
     });
 
@@ -298,10 +329,7 @@ function loadTodayOrders() {
 
 function printOrder(docId) {
     const order = allOrders.find(o => o.docId === docId);
-    if (!order) {
-        alert('الطلب غير موجود.');
-        return;
-    }
+    if (!order) { alert('الطلب غير موجود.'); return; }
 
     const items = Array.isArray(order.items) ? order.items : [];
     let total = 0;
@@ -311,14 +339,12 @@ function printOrder(docId) {
             const noteHtml = item.note ? `<div style="font-size:12px; color:#555;">ملاحظة: ${item.note}</div>` : '';
             const subtotal = (item.price * item.quantity).toFixed(2);
             total += item.price * item.quantity;
-            return `
-                <tr>
-                    <td>${item.name}</td>
-                    <td style="text-align:center;">${item.quantity}</td>
-                    <td style="text-align:right;">${subtotal} جنيه</td>
-                    <td>${noteHtml}</td>
-                </tr>
-            `;
+            return `<tr>
+                <td>${item.name}</td>
+                <td style="text-align:center;">${item.quantity}</td>
+                <td style="text-align:right;">${subtotal} جنيه</td>
+                <td>${noteHtml}</td>
+            </tr>`;
         }).join('')
         : `<tr><td colspan="4" style="text-align:center;">لا توجد أصناف في هذا الطلب</td></tr>`;
 
@@ -344,7 +370,6 @@ function printOrder(docId) {
             <p><strong>الطاولة:</strong> ${order.tableNumber || '-'}</p>
             <p><strong>التاريخ:</strong> ${formattedDate} ${formattedTime}</p>
             <p><strong>طريقة الدفع:</strong> ${order.paymentMethod === 'cash' ? 'نقداً' : 'بطاقة'}</p>
-
             <table>
                 <thead>
                     <tr>
@@ -354,9 +379,7 @@ function printOrder(docId) {
                         <th>الملاحظات</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${itemsHtml}
-                </tbody>
+                <tbody>${itemsHtml}</tbody>
                 <tfoot>
                     <tr>
                         <td colspan="2">الإجمالي</td>
@@ -364,10 +387,8 @@ function printOrder(docId) {
                     </tr>
                 </tfoot>
             </table>
-
             <hr>
             <p style="text-align:center;">شكراً لطلبكم!</p>
-
             <script>
                 window.print();
                 window.onafterprint = () => window.close();
