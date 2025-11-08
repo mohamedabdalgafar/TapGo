@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // ✅ كود التهيئة الخاص بمشروعك (هذه هي القيم التي قدمتها)
         const firebaseConfig = {
           apiKey: "AIzaSyD44pxiBHkzYZgCQPwJIk7f0HewG2RiqGM",
           authDomain: "tapgo-2f386.firebaseapp.com",
@@ -25,16 +24,11 @@
           measurementId: "G-YQJ1M8JJ1F"
         };
 
-        // تهيئة Firebase والوصول إلى قاعدة البيانات
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database(); 
     </script>
-    
+
     <style>
-        /* ==================================== */
-        /* تنسيقات إضافية لصفحة العميل */
-        /* ==================================== */
-        
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -68,7 +62,6 @@
             border-bottom: 1px solid #eee;
         }
 
-        /* تنسيق الـ FAB (الزر العائم) */
         .floating-btn {
             position: fixed;
             bottom: 20px;
@@ -85,7 +78,6 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 50;
-            padding: 0;
             border: none;
         }
         
@@ -102,11 +94,10 @@
             line-height: 1;
         }
         
-        /* تنسيق الـ Modal (السلة) */
         .modal {
             display: none; 
             position: fixed; 
-            z-index: 1000; /* قيمة عالية ليكون فوق كل شيء */
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%; 
@@ -117,12 +108,14 @@
         
         .modal-content {
             background-color: #fefefe;
-            margin: 10% auto; 
+            margin: 5% auto; 
             padding: 20px;
             border: 1px solid #888;
-            width: 90%;
+            width: 95%;
             max-width: 600px;
             border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .close-btn {
@@ -138,11 +131,12 @@
             color: var(--primary-color, #6d4c41);
         }
         
-        /* تنسيق الجدول داخل السلة */
         .cart-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            table-layout: fixed;
+            word-wrap: break-word;
         }
         
         .cart-table th, .cart-table td {
@@ -172,7 +166,6 @@
     </header>
 
     <div class="container">
-        
         <div id="table-number-section" class="card">
             <h2>أهلاً بك في TapGo!</h2>
             <p>يرجى مسح **رمز QR** الموجود على الطاولة لبدء طلبك.</p>
@@ -198,7 +191,7 @@
 
             <div id="menu-items" class="menu-grid">
                 <p id="loading-menu" style="text-align: center; color: #6c757d;">يتم تحميل قائمة الطعام...</p>
-                </div>
+            </div>
         </div>
 
         <div id="checkout-page" style="display:none;" class="card">
@@ -224,8 +217,7 @@
             <p><strong>الإجمالي المدفوع:</strong> <span id="confirmed-total-amount" style="font-weight: bold;"></span> جنيه</p>
             
             <h3>تفاصيل الطلب:</h3>
-            <ul id="confirmed-order-details" style="list-style: disc inside; text-align: right; padding-right: 20px;">
-                </ul>
+            <ul id="confirmed-order-details" style="list-style: disc inside; text-align: right; padding-right: 20px;"></ul>
             <p style="margin-top: 20px;">سيتم تجهيز طلبك قريباً.</p>
             <button class="btn btn-info" onclick="window.location.reload()">بدء طلب جديد</button>
         </div>
@@ -241,7 +233,7 @@
             <span class="close-btn" onclick="toggleCartModal()">&times;</span>
             <h2>سلة طلباتك <span id="modal-cart-count" class="badge">0</span></h2>
 
-            <div id="modal-cart-list"></div>
+            <table class="cart-table" id="modal-cart-list"></table>
 
             <p class="total-price modal-total">
             المجموع الكلي: <span id="modal-cart-total">0.00</span> جنيه
@@ -253,9 +245,6 @@
         </div>
     </div>
 
-
-
-    
     <script src="script.js"></script>
 </body>
 </html>

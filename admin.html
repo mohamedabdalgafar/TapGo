@@ -26,6 +26,8 @@
         const db = firebase.database();
         const storage = firebase.storage();
     </script>
+
+
 </head>
 <body>
 <header>
@@ -85,8 +87,15 @@
 
     <!-- الطلبات -->
     <div id="ordersContent" class="tab-content">
-        <!-- فلتر الطلبات -->
-        <div class="filter-controls" style="margin-bottom:15px;">
+        <div class="filter-controls">
+            <div class="input-group">
+                <label for="startDate">من تاريخ</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="input-group">
+                <label for="endDate">إلى تاريخ</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
             <div class="input-group">
                 <label for="filterStatus">فلتر حسب الحالة</label>
                 <select id="filterStatus" class="form-control" onchange="filterOrders()">
@@ -96,14 +105,6 @@
                     <option value="all">الكل</option>
                 </select>
             </div>
-            <div class="input-group">
-                <label for="startDate">من تاريخ</label>
-                <input type="date" id="startDate" class="form-control">
-            </div>
-            <div class="input-group">
-                <label for="endDate">إلى تاريخ</label>
-                <input type="date" id="endDate" class="form-control">
-            </div>
             <button class="btn btn-secondary" onclick="filterOrders()">تطبيق الفلتر</button>
         </div>
 
@@ -111,14 +112,12 @@
             <h2>الطلبات</h2>
             <div class="scroll-wrapper">
                 <div class="header-row order-grid">
-                    <div>رقم الطلب</div>
+                    <div>Order ID</div>
                     <div>الطاولة</div>
-                    <div>الأصناف</div>
-                    <div>الملاحظات</div>
                     <div>الإجمالي</div>
                     <div>طريقة الدفع</div>
-                    <div>وقت الطلب</div>
-                    <div>الحالة / الإجراءات</div>
+                    <div>الأصناف المطلوبة</div>
+                    <div>وقت الطلب / الحالة / إجراء</div>
                 </div>
                 <div id="ordersTableBody">
                     <p style="text-align:center; padding:15px;">يتم تحميل الطلبات...</p>

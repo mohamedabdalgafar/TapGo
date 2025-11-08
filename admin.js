@@ -4,17 +4,20 @@
 
 let menuItems = [];
 let nextItemId = 1;
-let allOrders = [];
-let lastOrdersCount = 0;
+let allOrders = []; // لتخزين جميع الطلبات
+let lastOrderCount = 0; // for new order notification
+
+// Audio for new order
+const newOrderSound = new Audio('https://www.myinstants.com/media/sounds/iphone_message.mp3');
 
 document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
     subscribeToOrdersUpdates();
     openTab(document.querySelector('.tab-btn.active'), 'menuContent');
-    setTodayFilter();
+    loadTodayOrders(); // filter today by default
 });
 
-// إدارة التبويبات
+// دالة إدارة التبويبات (Tabs)
 function openTab(evt, tabName) {
     const tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
@@ -27,11 +30,11 @@ function openTab(evt, tabName) {
 
     if (evt && evt.classList) evt.classList.add("active");
 
-    if (tabName === 'ordersContent') filterOrders();
+    if (tabName === 'ordersContent') filterOrders(); 
 }
 
 // ====================================
-// 2. إدارة قائمة المنيو (CRUD) + رفع الصور
+// 2. إدارة قائمة المنيو (CRUD)
 // ====================================
 
 function loadMenu() {
@@ -90,6 +93,7 @@ function saveMenuItem(event) {
     const docIdInput = document.getElementById('itemDocId');
     const name = document.getElementById('itemName').value.trim();
     const imageInput = document.getElementById('itemImage');
+    const image = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0].name : 'default.jpg';
     const price = parseFloat(document.getElementById('itemPrice').value);
     const category = document.getElementById('itemCategory').value;
     const currentDocId = docIdInput.value || null;
@@ -99,42 +103,24 @@ function saveMenuItem(event) {
         return;
     }
 
-    if (imageInput && imageInput.files && imageInput.files[0]) {
-        const file = imageInput.files[0];
-        const storageRef = storage.ref('menu_images/' + Date.now() + '_' + file.name);
-        storageRef.put(file).then(snapshot => {
-            snapshot.ref.getDownloadURL().then(url => {
-                saveMenuData(name, price, category, url, currentDocId);
-            });
-        }).catch(err => {
-            console.error('خطأ في رفع الصورة:', err);
-            alert('حدث خطأ أثناء رفع الصورة.');
-        });
+    const itemData = { name, image, price, category };
+
+    if (currentDocId) {
+        db.ref('menu/' + currentDocId).update(itemData)
+            .then(() => { alert(`تم تعديل العنصر بنجاح: ${name}`); })
+            .catch(error => { console.error("خطأ في تحديث العنصر: ", error); });
     } else {
-        const imageUrl = currentDocId ? menuItems.find(item => item.docId === currentDocId)?.image || 'default.jpg' : 'default.jpg';
-        saveMenuData(name, price, category, imageUrl, currentDocId);
+        itemData.id = nextItemId;
+        db.ref('menu').push(itemData)
+            .then(() => { alert(`تم إضافة العنصر الجديد بنجاح: ${name}`); })
+            .catch(error => { console.error("خطأ في إضافة العنصر: ", error); });
     }
 
     clearForm();
 }
 
-function saveMenuData(name, price, category, image, docId) {
-    const itemData = { name, price, category, image };
-
-    if (docId) {
-        db.ref('menu/' + docId).update(itemData)
-            .then(() => alert(`تم تعديل العنصر بنجاح: ${name}`))
-            .catch(err => console.error("خطأ في تعديل العنصر:", err));
-    } else {
-        itemData.id = nextItemId++;
-        db.ref('menu').push(itemData)
-            .then(() => alert(`تم إضافة العنصر الجديد بنجاح: ${name}`))
-            .catch(err => console.error("خطأ في إضافة العنصر:", err));
-    }
-}
-
 function editMenuItem(docId) {
-    const item = menuItems.find(i => i.docId === docId);
+    const item = menuItems.find(item => item.docId === docId);
     if (!item) return;
 
     document.getElementById('itemDocId').value = item.docId;
@@ -146,8 +132,8 @@ function editMenuItem(docId) {
 function deleteMenuItem(docId) {
     if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
         db.ref('menu/' + docId).remove()
-            .then(() => alert('تم حذف العنصر بنجاح.'))
-            .catch(err => console.error("خطأ في الحذف:", err));
+            .then(() => { alert('تم حذف العنصر بنجاح.'); })
+            .catch(error => { console.error("خطأ في حذف العنصر: ", error); });
     }
 }
 
@@ -159,9 +145,9 @@ function clearForm() {
     document.getElementById('itemImage').value = '';
 }
 
-function translateCategory(cat) {
-    const map = { drinks: 'مشروبات', food: 'مأكولات', desserts: 'حلويات' };
-    return map[cat] || cat;
+function translateCategory(category) {
+    const translations = { drinks: 'مشروبات', food: 'مأكولات', desserts: 'حلويات' };
+    return translations[category] || category;
 }
 
 // ====================================
@@ -177,9 +163,18 @@ function subscribeToOrdersUpdates() {
                 allOrders.push({ ...order, docId: childSnapshot.key });
             });
         }
+
+        // Play sound if new order
+        if (allOrders.length > lastOrderCount) {
+            newOrderSound.play();
+        }
+        lastOrderCount = allOrders.length;
+
         filterOrders();
-        console.log("✅ تم تحديث الطلبات لحظياً.");
-    }, err => console.error("خطأ في الاستماع للطلبات:", err));
+        console.log("✅ تم تحديث قائمة الطلبات لحظياً.");
+    }, error => {
+        console.error("خطأ في الاستماع للطلبات:", error);
+    });
 }
 
 function renderOrders(ordersToDisplay) {
@@ -187,137 +182,218 @@ function renderOrders(ordersToDisplay) {
     ordersTableBody.innerHTML = '';
 
     if (ordersToDisplay.length === 0) {
-        ordersTableBody.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد طلبات.</p>';
+        ordersTableBody.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 20px;">لا توجد طلبات.</p>';
         return;
     }
 
-    ordersToDisplay.sort((a,b) => b.timestamp - a.timestamp);
-
-    if (ordersToDisplay.length > lastOrdersCount) playNewOrderSound();
-    lastOrdersCount = ordersToDisplay.length;
+    ordersToDisplay.sort((a, b) => b.timestamp - a.timestamp);
 
     ordersToDisplay.forEach(order => {
-        const itemsSummary = order.items.map(i => `${i.name} x${i.quantity}`).join(', ');
         const orderDate = new Date(order.timestamp);
-        const formattedTime = orderDate.toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit' });
-        const formattedDate = orderDate.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
+        const formattedTime = orderDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const formattedDate = orderDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
 
-        let statusColor = 'blue';
-        if(order.status==='new') statusColor='red';
-        else if(order.status==='in_progress') statusColor='orange';
-        else if(order.status==='delivered') statusColor='green';
+        const statusColor = order.status === 'new' ? 'red' : order.status === 'in_progress' ? 'orange' : 'green';
+
+        // Build item list with notes
+        const itemsHtml = order.items.map(item => {
+            const noteHtml = item.note ? `<div class="item-note">ملاحظة: ${item.note}</div>` : '';
+            return `<div class="order-item"><strong>${item.name} (x${item.quantity})</strong>${noteHtml}</div>`;
+        }).join('');
 
         const row = document.createElement('div');
-        row.className='order-grid order-row';
-        if(order.status==='new') row.style.backgroundColor='#fff3cd';
+        row.className = 'order-grid order-row';
+        if (order.status === 'new') row.classList.add('new-order-highlight');
 
-        row.innerHTML=`
-            <div>${order.id || order.docId}</div>
-            <div>${order.tableNumber || '-'}</div>
-            <div style="font-size:13px;">${itemsSummary}</div>
-            <div style="font-size:13px;">${order.notes || '-'}</div>
+        row.innerHTML = `
+            <div><strong>${order.orderId || '-'}</strong></div>
+            <div><strong>${order.tableNumber || '-'}</strong></div>
             <div>${order.total ? order.total.toFixed(2) : '0.00'} جنيه</div>
-            <div>${order.paymentMethod==='cash'?'نقداً':'بطاقة'}</div>
+            <div>${order.paymentMethod === 'cash' ? 'نقداً' : 'بطاقة'}</div>
+            <div>${itemsHtml}</div>
             <div>${formattedDate} ${formattedTime}</div>
             <div>
-                <span style="color:${statusColor}; font-weight:bold;">${translateStatus(order.status)}</span>
-                <button class="btn btn-secondary" style="padding:3px 8px;margin:2px;" onclick="updateOrderStatus('${order.docId}','${order.status}')">تحديث</button>
-                <button class="btn btn-primary" style="padding:3px 8px;margin:2px;" onclick="printOrder('${order.docId}')">طباعة</button>
+                <span style="color: ${statusColor}; font-weight: bold;">${translateStatus(order.status)}</span>
+                <button class="btn btn-secondary" style="padding: 3px 8px; margin-right: 5px;" onclick="updateOrderStatus('${order.docId}', '${order.status}')">تحديث</button>
+                <button class="btn btn-primary" onclick="printOrder('${order.docId}')">طباعة</button>
             </div>
         `;
         ordersTableBody.appendChild(row);
     });
 }
 
-function translateStatus(status){
-    const translations = { new:'جديد', in_progress:'قيد التجهيز', delivered:'تم التسليم' };
+function translateStatus(status) {
+    const translations = { new: 'جديد', in_progress: 'قيد التجهيز', delivered: 'تم التسليم' };
     return translations[status] || status;
 }
 
-function updateOrderStatus(docId, currentStatus){
-    let newStatus='';
-    if(currentStatus==='new') newStatus='in_progress';
-    else if(currentStatus==='in_progress') newStatus='delivered';
-    else newStatus='new';
+function updateOrderStatus(docId, currentStatus) {
+    let newStatus = '';
+    if (currentStatus === 'new') newStatus = 'in_progress';
+    else if (currentStatus === 'in_progress') newStatus = 'delivered';
+    else newStatus = 'new';
 
-    if(confirm(`هل أنت متأكد من تغيير حالة الطلب إلى "${translateStatus(newStatus)}"؟`)){
-        db.ref('orders/'+docId).update({status:newStatus})
-            .then(()=>alert(`تم تحديث حالة الطلب إلى ${translateStatus(newStatus)}.`))
-            .catch(err=>console.error("خطأ في تحديث الحالة:",err));
+    if (confirm(`هل أنت متأكد من تغيير حالة الطلب إلى "${translateStatus(newStatus)}"؟`)) {
+        db.ref('orders/' + docId).update({ status: newStatus })
+            .then(() => { alert(`تم تحديث حالة الطلب إلى ${translateStatus(newStatus)}.`); })
+            .catch(error => { console.error("خطأ في تحديث الحالة:", error); });
     }
 }
 
 // ====================================
-// 4. فلترة وتحميل الطلبات
+// 4. تصفية الطلبات حسب التاريخ والحالة
 // ====================================
 
-function setTodayFilter(){
+function filterOrders() {
+    const startInput = document.getElementById('startDate')?.value;
+    const endInput = document.getElementById('endDate')?.value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
     const today = new Date();
-    today.setHours(0,0,0,0);
-    const todayISO = today.toISOString().split('T')[0];
-    const startInput = document.getElementById('startDate');
-    const endInput = document.getElementById('endDate');
-    if(startInput) startInput.value = todayISO;
-    if(endInput) endInput.value = todayISO;
-}
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
 
-function filterOrders(){
-    const startInput=document.getElementById('startDate')?.value;
-    const endInput=document.getElementById('endDate')?.value;
-    const statusFilter=document.getElementById('filterStatus').value;
+    let startTimestamp = todayTimestamp; // default today
+    let endTimestamp = Infinity;
 
-    let startTimestamp=0, endTimestamp=Infinity;
+    if (startInput) {
+        const startDate = new Date(startInput);
+        startDate.setHours(0, 0, 0, 0);
+        startTimestamp = startDate.getTime();
+    }
 
-    if(startInput){ let d=new Date(startInput); d.setHours(0,0,0,0); startTimestamp=d.getTime(); }
-    if(endInput){ let d=new Date(endInput); d.setHours(23,59,59,999); endTimestamp=d.getTime(); }
+    if (endInput) {
+        const endDate = new Date(endInput);
+        endDate.setHours(23, 59, 59, 999);
+        endTimestamp = endDate.getTime();
+    }
 
-    const filtered = allOrders.filter(order=>{
-        if(!order.timestamp) return false;
-        const inRange = order.timestamp>=startTimestamp && order.timestamp<=endTimestamp;
-        const statusMatch = statusFilter==='all' || order.status===statusFilter;
-        return inRange && statusMatch;
+    const filteredOrders = allOrders.filter(order => {
+        if (!order.timestamp) return false;
+        const inDateRange = order.timestamp >= startTimestamp && order.timestamp <= endTimestamp;
+        const statusMatch = statusFilter === 'all' || order.status === statusFilter;
+        return inDateRange && statusMatch;
     });
 
-    renderOrders(filtered);
+    renderOrders(filteredOrders);
+}
+
+function loadTodayOrders() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString().split('T')[0];
+
+    const startInput = document.getElementById('startDate');
+    const endInput = document.getElementById('endDate');
+
+    if (startInput) startInput.value = todayISO;
+    if (endInput) endInput.value = todayISO;
+
+    filterOrders();
 }
 
 // ====================================
-// 5. أصوات وطباعة الطلب
+// 5. Print Order
 // ====================================
 
-function playNewOrderSound(){
-    const audio=new Audio('new_order_sound.mp3');
-    audio.play();
-}
+function printOrder(docId) {
+    const order = allOrders.find(o => o.docId === docId);
+    if (!order) {
+        alert('الطلب غير موجود.');
+        return;
+    }
 
-function printOrder(docId){
-    const order = allOrders.find(o=>o.docId===docId);
-    if(!order) return;
+    const items = Array.isArray(order.items) ? order.items : [];
+    let total = 0;
 
-    let itemsHTML = order.items.map(i=>`<tr><td>${i.name}</td><td>${i.quantity}</td><td>${(i.price*i.quantity).toFixed(2)}</td></tr>`).join('');
-
-    let printWindow=window.open('','', 'width=600,height=700');
-    printWindow.document.write(`
-        <h2 style="text-align:center;">طلب رقم: ${order.id || order.docId}</h2>
-        <p><strong>الطاولة:</strong> ${order.tableNumber || '-'}</p>
-        <table border="1" cellpadding="5" cellspacing="0" width="100%">
-            <thead>
+    const itemsHtml = items.length
+        ? items.map(item => {
+            const noteHtml = item.note ? `<div style="font-size:12px; color:#555;">ملاحظة: ${item.note}</div>` : '';
+            const subtotal = (item.price * item.quantity).toFixed(2);
+            total += item.price * item.quantity;
+            return `
                 <tr>
-                    <th>المنتج</th>
-                    <th>الكمية</th>
-                    <th>المجموع</th>
+                    <td>${item.name}</td>
+                    <td style="text-align:center;">${item.quantity}</td>
+                    <td style="text-align:right;">${subtotal} جنيه</td>
+                    <td>${noteHtml}</td>
                 </tr>
-            </thead>
-            <tbody>
-                ${itemsHTML}
-            </tbody>
-        </table>
-        <p><strong>الملاحظات:</strong> ${order.notes || '-'}</p>
-        <p><strong>الإجمالي:</strong> ${order.total ? order.total.toFixed(2) : '0.00'} جنيه</p>
-        <p><strong>طريقة الدفع:</strong> ${order.paymentMethod==='cash'?'نقداً':'بطاقة'}</p>
-        <p><strong>وقت الطلب:</strong> ${new Date(order.timestamp).toLocaleString('ar-EG')}</p>
-        <hr>
-        <p style="text-align:center;">شكراً لاستخدام TapGo!</p>
-    `);
-    printWindow.print();
+            `;
+        }).join('')
+        : `<tr><td colspan="4" style="text-align:center;">لا توجد أصناف في هذا الطلب</td></tr>`;
+
+    const orderDate = new Date(order.timestamp || Date.now());
+    const formattedDate = orderDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' });
+    const formattedTime = orderDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+    const htmlContent = `
+        <html>
+        <head>
+            <title>فاتورة طلب #${order.orderId || '-'}</title>
+            <style>
+                body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
+                h2 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; }
+                th { background-color: #f4f4f4; }
+                tfoot td { font-weight: bold; text-align: right; }
+            </style>
+        </head>
+        <body>
+            <h2>فاتورة طلب #${order.orderId || '-'}</h2>
+            <p><strong>الطاولة:</strong> ${order.tableNumber || '-'}</p>
+            <p><strong>التاريخ:</strong> ${formattedDate} ${formattedTime}</p>
+            <p><strong>طريقة الدفع:</strong> ${order.paymentMethod === 'cash' ? 'نقداً' : 'بطاقة'}</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>الصنف</th>
+                        <th>الكمية</th>
+                        <th>السعر</th>
+                        <th>الملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">الإجمالي</td>
+                        <td colspan="2">${total.toFixed(2)} جنيه</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <hr>
+            <p style="text-align:center;">شكراً لطلبكم!</p>
+
+            <script>
+                window.print();
+                window.onafterprint = () => window.close();
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '', 'width=600,height=800');
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+}
+function addNewOrder(orderData) {
+    // Generate a unique order ID
+    const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    orderData.orderId = orderId;
+
+    // Add timestamp if not already
+    if (!orderData.timestamp) orderData.timestamp = Date.now();
+
+    db.ref('orders').push(orderData)
+        .then(() => {
+            console.log('✅ تم إضافة الطلب الجديد برقم:', orderId);
+        })
+        .catch(error => {
+            console.error('خطأ عند إضافة الطلب:', error);
+        });
 }

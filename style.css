@@ -169,14 +169,15 @@ header a.btn {
     border-bottom: 1px dashed #ccc;
 }
 
+
 .order-grid {
-    grid-template-columns: 1fr 1fr 1fr 1.8fr 120px 100px;
-    gap: 10px;
-    padding: 8px;
-    font-size: 0.9em;
     display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 2fr 2fr; /* adjust column widths */
+    gap: 10px;
     align-items: center;
+    padding: 5px 0;
     border-bottom: 1px solid #eee;
+    word-break: break-word; /* ensures long content wraps instead of overflowing */
 }
 
 /* 🛠️ تنسيق رأس الجدول */
@@ -309,3 +310,10 @@ header a.btn {
     background-color: #fff3cd !important;
     transition: background-color 2s;
 }
+.scroll-wrapper {
+    overflow-x: auto; /* keeps horizontal scrolling if needed */
+    max-width: 100%;  /* ensures it does not overflow container */
+}
+
+
+
