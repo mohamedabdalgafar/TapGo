@@ -8,7 +8,7 @@ let allOrders = []; // لتخزين جميع الطلبات
 let lastOrderCount = 0; // for new order notification
 
 // Audio for new order
-const newOrderSound = new Audio('https://www.myinstants.com/media/sounds/iphone_message.mp3');
+const newOrderSound = new Audio('soundforneworder.mp3');
 
 document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
